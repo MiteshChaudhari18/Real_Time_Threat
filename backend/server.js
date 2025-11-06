@@ -9,28 +9,28 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // --------------------
-// ✅ CORS Configuration
+// ✅ CORS Configuration (Dynamic + Safe)
 // --------------------
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'https://real-time-threat.vercel.app', // your frontend domain
-];
-
-// If FRONTEND_URL exists in .env, allow those too
-if (process.env.FRONTEND_URL) {
-  allowedOrigins.push(
-    ...process.env.FRONTEND_URL.split(',').map(url => url.trim())
-  );
-}
-
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (e.g. Postman, curl)
+    // Allow requests with no origin (like curl, mobile, Postman)
     if (!origin) return callback(null, true);
 
-    // Allow matching origins
-    if (allowedOrigins.includes(origin)) {
+    // Your main production domain
+    const allowedOrigins = [
+      'https://real-time-threat.vercel.app',
+      'http://localhost:3000',
+      'http://localhost:5173',
+    ];
+
+    // Automatically allow any *.vercel.app preview deployments
+    const vercelPattern = /\.vercel\.app$/;
+
+    if (
+      allowedOrigins.includes(origin) ||
+      vercelPattern.test(new URL(origin).hostname)
+    ) {
+      console.log(`✅ CORS allowed for: ${origin}`);
       return callback(null, true);
     } else {
       console.warn(`🚫 CORS blocked request from: ${origin}`);
@@ -41,7 +41,7 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 };
 
-// Apply CORS + middleware
+// Apply middleware
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -61,7 +61,7 @@ if (process.env.MONGODB_URI) {
 // --------------------
 app.use('/api', apiRoutes);
 
-// Health check route
+// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Threat Intelligence API is running' });
 });
