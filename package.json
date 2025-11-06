@@ -1,0 +1,27 @@
+{
+  "name": "realtime-threat-intel-dashboard",
+  "version": "1.0.0",
+  "description": "Real-Time Threat Intelligence Dashboard aggregating data from VirusTotal, Shodan, and AbuseIPDB",
+  "main": "backend/server.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd backend && nodemon server.js",
+    "client": "cd frontend && npm run dev",
+    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "setup": "node setup.js",
+    "start": "cd backend && node server.js",
+    "build": "cd frontend && npm run build"
+  },
+  "keywords": [
+    "threat-intelligence",
+    "cybersecurity",
+    "dashboard",
+    "soc"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+
