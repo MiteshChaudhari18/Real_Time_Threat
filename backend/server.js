@@ -8,63 +8,79 @@ const apiRoutes = require('./routes/apiRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS Configuration
+// --------------------
+// ✅ CORS Configuration
+// --------------------
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://real-time-threat.vercel.app', // your frontend domain
+];
+
+// If FRONTEND_URL exists in .env, allow those too
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(
+    ...process.env.FRONTEND_URL.split(',').map(url => url.trim())
+  );
+}
+
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (e.g. Postman, curl)
     if (!origin) return callback(null, true);
-    
-    // Get allowed origins from environment
-    const allowedOrigins = process.env.FRONTEND_URL
-      ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
-      : ['http://localhost:3000', 'http://localhost:5173'];
-    
-    // In development, allow localhost origins
-    if (process.env.NODE_ENV !== 'production') {
-      allowedOrigins.push('http://localhost:3000', 'http://localhost:5173');
-    }
-    
-    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.some(allowed => origin.startsWith(allowed))) {
-      callback(null, true);
+
+    // Allow matching origins
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      console.warn(`🚫 CORS blocked request from: ${origin}`);
+      return callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
 };
 
-// Middleware
+// Apply CORS + middleware
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Connect to MongoDB (optional - will work without it)
+// --------------------
+// ✅ MongoDB Connection (Optional)
+// --------------------
 if (process.env.MONGODB_URI) {
-  mongoose.connect(process.env.MONGODB_URI)
+  mongoose
+    .connect(process.env.MONGODB_URI)
     .then(() => console.log('✅ Connected to MongoDB'))
     .catch((err) => console.log('⚠️ MongoDB connection failed:', err.message));
 }
 
-// Routes
+// --------------------
+// ✅ Routes
+// --------------------
 app.use('/api', apiRoutes);
 
-// Health check
+// Health check route
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Threat Intelligence API is running' });
 });
 
-// Error handling middleware
+// --------------------
+// ✅ Global Error Handling
+// --------------------
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ 
+  console.error('❌ Error:', err.message);
+  res.status(500).json({
     error: 'Something went wrong!',
-    message: err.message 
+    message: err.message,
   });
 });
 
+// --------------------
+// ✅ Server Start
+// --------------------
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Dashboard API available at http://localhost:${PORT}/api`);
 });
-
